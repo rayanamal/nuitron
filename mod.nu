@@ -499,7 +499,9 @@ export def ensure-dir [
 	}
 }
 
-# Format an item for display in terminal output.
+# Format the input for display with a predefined style.
+# If no style is given and the item is a file, directory or a symlink the corresponding style is used instead. If no style can be determined, the input will be returned unchanged.
+# Check out the source code for styles and their names.
 export def fmt [type?: string]: string -> string {
 	let path = $in
 	let type = (
@@ -511,16 +513,16 @@ export def fmt [type?: string]: string -> string {
 		)
 	)
 	match $type {
-		'path'    => [ xyellow ]
-		'file'    => [ olive ]
-		'dir'     => [ light_cyan ]
-		'symlink' => [ xpurplea ]
-		'cmd'     => [ light_purple_bold ]
-		'depset'  => [ light_blue_bold ]
-		'dep'     => [ yellow_bold ]
-		'input'   => [ grey62 ]
-		'key'     => [ mediumturquoise attr_bold]
-		'type'    => [ cyan ]
+		'path'    => [ xyellow ]                     # Path to unknown item.
+		'file'    => [ olive ]                       # File path.
+		'dir'     => [ light_cyan ]                  # Directory path.
+		'symlink' => [ xpurplea ]                    # Symlink path.
+		'cmd'     => [ light_purple_bold ]           # Shell command.
+		'key'     => [ mediumturquoise attr_bold]    # A key in user input (e.g in a TOML, JSON, YAML etc. file.)
+		'type'    => [ cyan ]                        # A type description.
+		'input'   => [ grey62 ]                      # Unknown, invalid or unrecognized user input.
+		'depset'  => [ light_blue_bold ]             # This is for use in Depman. TODO: Separate this into Depman repo.
+		'dep'     => [ yellow_bold ]                 # Same as above. 
 	}
 	| with {|code|
 		$path
