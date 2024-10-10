@@ -191,7 +191,7 @@ export def error [
 		| do-if ($hint != null) { $in + ($'hint: ($hint)' | style blueviolet attr_bold) }
 		| print $in
 		if ($env.nuitron_exit_on_error? == true) {
-			exit 1
+			exit ($env.nuitron_error_exit_code? | default 1)
 		}
 	}
 	
