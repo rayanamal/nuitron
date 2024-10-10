@@ -1,8 +1,3 @@
-# Get the platform filesystem path separator. ('\' or '/')
-export def get-os-path-separator []: nothing -> string { ignore
-    if $nu.os-info.family == unix {'/'} else {'\'}
-}
-
 # Open a toml file and error with a helpful message if it can't be parsed.
 export def open-toml [path: path]: nothing -> record { ignore
     err-if (($path | path parse).extension != 'toml') {title: 'Not a TOML file' message: $"The file you are trying to open is not a TOML file: ($path | fmt)"}
@@ -529,7 +524,7 @@ export def fmt [type?: string]: string -> string {
 	}
 	| with {|code|
 		$path
-		| do-if ($type == dir) { path split | path join | $in + (get-os-path-separator) }
+		| do-if ($type == dir) { path split | path join | $in + (char path_sep) }
 		| do-if ($type == input) { $'"($in)"'}
 		| do-if ($code != null) { style ...$code }
 	}
