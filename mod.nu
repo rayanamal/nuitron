@@ -1,6 +1,6 @@
 # Open a toml file and error with a helpful message if it can't be parsed.
 export def open-toml [path: path]: nothing -> record { ignore
-    err-if (($path | path parse).extension != 'toml') {title: 'Not a TOML file' message: $"The file you are trying to open is not a TOML file: ($path | fmt)"}
+    err-if (($path | path parse).extension != 'toml') {title: 'Not a TOML file' message: $"The file you are trying to open is not a TOML file: ($path | ft)"}
 	try {
 		open $path
 	} catch {|err|
@@ -11,7 +11,7 @@ export def open-toml [path: path]: nothing -> record { ignore
 			$err.debug
 			| parse -r '(?<hint>TOML parse error at line \d+, column \d+)'
 			| get 0.hint
-			| $in + $' in file ($path | fmt file).'
+			| $in + $' in file ($path | ft file).'
 		}
 		| reject hint
 		| error $in
@@ -152,8 +152,8 @@ export def error [
 		($record.source? | is-type --not string nothing) or
 		not ($record | columns | all-in [message hint title source])
 	) {
-		(_error $"The given error message doesn't match type ('record<message: string, hint?: string, title?: string, source?: string>' | fmt type): \n\n($record)" 
-			$"Run ('error --help' | fmt cmd) for more information."
+		(_error $"The given error message doesn't match type ('record<message: string, hint?: string, title?: string, source?: string>' | ft type): \n\n($record)" 
+			$"Run ('error --help' | ft cmd) for more information."
 			$"Type mismatch" 
 			'error')
 	}
@@ -309,14 +309,14 @@ export def check-type [
 			$value | is-type ...$types
 		}
 		| if not $in {
-			let types_str: string = $types	| each {fmt type} | recount --no-quotes
+			let types_str: string = $types	| each {ft type} | recount --no-quotes
 			let value_type: string = $value | describe
 			match $error.name {
-				source => { source: $error.value, message: $"The given value has a type of ($value_type | fmt type): \n($value)", hint: $"Accepted types are ($types_str)." }
-				loc-str => { message: $"The specified value ($error.value) has a type of ($value_type | fmt type): \n($value)", hint: $"Accepted types are ($types_str)." }
+				source => { source: $error.value, message: $"The given value has a type of ($value_type | ft type): \n($value)", hint: $"Accepted types are ($types_str)." }
+				loc-str => { message: $"The specified value ($error.value) has a type of ($value_type | ft type): \n($value)", hint: $"Accepted types are ($types_str)." }
 				err-msg => { 
 					do $error.value $value $value_type $types_str 
-					| err-if ((not ($in | is-type 'record')) or ($in.message? == null or $in.hint? == null)) $"check-type: Output of the closure passed in with --err-msg \(-m\) flag doesn't match the type ('record<message: string, hint: string, title?: string>' | fmt type)."
+					| err-if ((not ($in | is-type 'record')) or ($in.message? == null or $in.hint? == null)) $"check-type: Output of the closure passed in with --err-msg \(-m\) flag doesn't match the type ('record<message: string, hint: string, title?: string>' | ft type)."
 				}
 			}
 			| {title: "Type mismatch", ...$in}
@@ -492,17 +492,17 @@ export def ensure-dir [
 	}
 	let type: string = (ls -D $path).type.0
 	if $type != dir {
-		error $"Can't create the directory ($path). There is already an item named ($path | path basename | fmt $type) in ($path | path dirname | fmt dir)."
+		error $"Can't create the directory ($path). There is already an item named ($path | path basename | ft $type) in ($path | path dirname | ft dir)."
 	}
 	if $empty and (ls $path | is-not-empty) {
-		error $"Can't create the directory ($path | fmt dir). There is already a non-empty directory at ($path | fmt dir)\"."
+		error $"Can't create the directory ($path | ft dir). There is already a non-empty directory at ($path | ft dir)\"."
 	}
 }
 
 # Format the input for display with a predefined style.
 # If no style is given and the item is a file, directory or a symlink the corresponding style is used instead. If no style can be determined, the input will be returned unchanged.
 # Check out the source code for styles and their names.
-export def fmt [type?: string]: string -> string {
+export def ft [type?: string]: string -> string {
 	let path = $in
 	let type = (
 		$type | default (
@@ -549,7 +549,7 @@ export def parse-error []: record<msg: string, debug: string, raw: error> -> rec
 					$struct.input | parse "value: '\"{value}\"'"
 					| $"($struct.msg)\nThe received input: ($in)"
 				}
-				DirectoryNotFound => { $"Can't find the directory at path ($struct.dir | fmt dir)" }
+				DirectoryNotFound => { $"Can't find the directory at path ($struct.dir | ft dir)" }
 				_ => { $struct.msg }
 			}
 		)
