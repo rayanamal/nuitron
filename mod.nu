@@ -165,12 +165,13 @@ export def error [
 	let source = if $record != null { $record.source? } else { $source }
 
 	def _error [message, hint?, title?, source?] {
-		let no_title = $title == null
-		let title = if $no_title { $message } else { $title }
-		let message = if $no_title {} else { $message }
+		# TODO: Handle title and message both being empty strings. 
+		let swap_title = ($title | is-empty) and ($message | is-not-empty)
+		let title = if $swap_title { $message } else { $title }
+		let message = if $swap_title or ($message | is-empty) { null } else { $message }
 		if ($title | str contains "\n") {
 			(_error $"The text of the provided error contains newlines: \n($title | to nuon)" 
-				$"Remove newlines from the (if $no_title {"message"} else {"title"})." 
+				$"Remove newlines from the (if $swap_title {"message"} else {"title"})." 
 				$"Newlines in provided error text" 
 				'error')
 		}
@@ -180,7 +181,7 @@ export def error [
 				$"Whitespace in provided error source" 
 				'error')
 		}
-		$"(('Error' | style red) + ':' | style attr_bold)   ('×' | style red) (if $source != null {$source | style navy attr_bold | $in + ': '} else {''} )($title | do-if --not $no_title {style attr_bold })"
+		$"(('Error' | style red) + ':' | style attr_bold)   ('×' | style red) (if $source != null {$source | style navy attr_bold | $in + ': '} else {''} )($title | do-if --not $swap_title {style attr_bold })"
 		| do-if ($message != null) { 
 			$in + "\n ├\n" + (($message | str trim) + (if $hint != null {"\n"} else {''}) | str replace --all -m '^(.*)$' $" │ $1")
 			| if ($hint == null) { 
@@ -353,7 +354,7 @@ export def is-type [
 		}
 	}
 
-	($value_type in $types) or (	
+	($value_type in $types) or (
 		# An empty list should match a list containing any type.
 		# TODO: The current method can't work on lists nested inside other data types. For this to work, we need to match the output of describe --detailed. It contains information about whether the list is empty too.
 		$value_type == 'list<any>' and
@@ -386,7 +387,7 @@ export def err-if-any [
 # Check the input against a condition and error if check passes.
 export def err-if [
 	condition: bool   # A condition to check for.
-	message: any      # (string | record) An error message string or a record with fields <message: string, title?: string, hint?: string> to display.
+	message: any      # (string | record) An error message string or a record with fields <message: string, title?: string, hint?: string, source?: hint> to display.
 	--not             # Negate the condition.
 ]: any -> any {
 	do-if ($condition xor $not) {
@@ -537,10 +538,10 @@ export def ft [type?: string]: string -> string {
 # Parse an error returned in a catch statement into a standardized format.
 # You can use the returned value directly with nuitron error command.
 export def parse-error []: record<msg: string, debug: string, raw: error> -> record<title: string, message: string, hint: string> {
-	let $err = $in | check-type --structured 'record<msg: string, debug: string, raw: error>' --source 'parse-error' # todo check actually matters
+	let $err = $in | upsert exit_code {default 0} | check-type --source 'parse-error' --structured 'record<msg: string, debug: string, raw: error, exit_code: int>'
 	let type = $err.debug | parse -r '^(?<type>\w+)' | get 0.type
 	let spans: list<string> = try {
-		$err.debug 
+		$err.debug
 		| parse -r 'Span { start: (?<start>\d+), end: (?<end>\d+) }' 
 		| update cells { into int }
 		| each { view span $in.start $in.end }
@@ -548,25 +549,40 @@ export def parse-error []: record<msg: string, debug: string, raw: error> -> rec
 	$err.debug
 	| str replace -r $'^($type) ' ''
 	| str replace --all -r 'Some\((.*?)\)' '$1'
-	| str replace --all -r ', \w+: Span {.+?}' ''
+	| str replace --all -r '\w+: Span {.+?}' ''
 	| from nuon
 	| with {|struct|
-		let message = (
-			match $type {
-				UnsupportedInput => {
-					$struct.input | parse "value: '\"{value}\"'"
-					| $"($struct.msg)\nThe received input: ($in)"
-				}
-				DirectoryNotFound => { $"Can't find the directory at path ($struct.dir | ft dir)" }
-				NonZeroExitCode => {
-					$"External command ($spans.0 | ft cmd) exited with code ($err.exit_code | style xred)"
-				}
-				_ => { $"($struct.msg): ($spans | first | ft cmd)" }
+		match $type {
+			UnsupportedInput => {
+				$struct.input | parse "value: '\"{value}\"'"
+				| $"($struct.msg)\nThe received input: ($in)"
 			}
-		)
-		{
+			DirectoryNotFound => { $"Can't find the directory at path ($struct.dir | ft dir)" }
+			NonZeroExitCode => {
+				$"($spans.0 | ft cmd) exited with code ($err.exit_code | style rb)"
+			}
+			DatetimeParseError => {{
+				title: "Unable to parse datetime"
+				message: $"Can't parse the following value as a datetime: ($struct.msg | ft input)"
+			}}
+			DidYouMean => {{
+				message: $"Can't find the given name ($spans | first | ft input) in the value."
+				hint: $"Did you mean '($struct.suggestion)'?"
+			}}
+			_ => { 
+				($spans | first | ft cmd)
+				| if ($struct.msg? != null) {
+					$"($struct.msg): ($in)"
+				} else {
+					$"($err.msg): ($in)"
+				}
+			}
+		}
+		| do-if ($in | is-type string) {
+			{message: $in}
+		}
+		| defaults {
 			title: $err.msg,
-			message: $message,
 			hint: $struct.help?
 		}
 	}
