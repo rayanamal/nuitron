@@ -15,7 +15,7 @@ export def open-toml [path: path]: nothing -> record { ignore
 		}
 		| reject hint
 		| error $in
-	} 
+	}
 }
 
 # Run a closure on each row of the input list without disrupting the pipeline.
@@ -104,6 +104,7 @@ export def prt [
 
 # Say something to the user. 
 # This command returns the input as-is.
+# If $env.nuitron_shut_up environment variable is set to true, nothing will be printed.
 export def say [
 	...message: string   # The message to tell the user.
  	--ansi (-a): any     # (list<string> | string) Apply the given ANSI escape codes to the message
@@ -130,8 +131,8 @@ export def say [
 		| reduce {|it, acc| $acc | style $it } -f $str
 	}
 	| $"(arw $indent)($in)"
-	| do-if --not $output {
-		print $in
+	| do-if ($output == false) {
+		if $env.nuitron_shut_up? != true { print $in }
 		$input
 	}
 }
