@@ -517,11 +517,12 @@ export def ft [type?: string]: string -> string {
 		'file'    => [ olive ]                       # File path.
 		'dir'     => [ light_cyan ]                  # Directory path.
 		'symlink' => [ xpurplea ]                    # Symlink path.
-		'cmd'     => [ light_purple_bold ]           # Shell command.
+		'cmd'     => [ magenta ]                     # Shell command.
 		'key'     => [ mediumturquoise attr_bold]    # A key in user input (e.g in a TOML, JSON, YAML etc. file.)
 		'type'    => [ cyan ]                        # A type description.
 		'input'   => [ grey62 ]                      # Unknown, invalid or unrecognized user input.
 		'depset'  => [ light_blue_bold ]             # This is for use in Depman. TODO: Separate this into Depman repo.
+		'command' => [ darkgoldenrod attr_bold ]     # Same as above.
 		'dep'     => [ yellow_bold ]                 # Same as above. 
 	}
 	| with {|code|
@@ -537,6 +538,12 @@ export def ft [type?: string]: string -> string {
 export def parse-error []: record<msg: string, debug: string, raw: error> -> record<title: string, message: string, hint: string> {
 	let $err = $in | check-type --structured 'record<msg: string, debug: string, raw: error>' --source 'parse-error' # todo check actually matters
 	let type = $err.debug | parse -r '^(?<type>\w+)' | get 0.type
+	let spans: list<string> = try {
+		$err.debug 
+		| parse -r 'Span { start: (?<start>\d+), end: (?<end>\d+) }' 
+		| update cells { into int }
+		| each { view span $in.start $in.end }
+	}
 	$err.debug
 	| str replace -r $'^($type) ' ''
 	| str replace --all -r 'Some\((.*?)\)' '$1'
@@ -550,7 +557,10 @@ export def parse-error []: record<msg: string, debug: string, raw: error> -> rec
 					| $"($struct.msg)\nThe received input: ($in)"
 				}
 				DirectoryNotFound => { $"Can't find the directory at path ($struct.dir | ft dir)" }
-				_ => { $struct.msg }
+				NonZeroExitCode => {
+					$"External command ($spans.0 | ft cmd) exited with code ($err.exit_code | style xred)"
+				}
+				_ => { $"($struct.msg): ($spans | first | ft cmd)" }
 			}
 		)
 		{
