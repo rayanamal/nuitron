@@ -517,11 +517,12 @@ export def ft [type?: string]: string -> string {
 		'file'    => [ olive ]                       # File path.
 		'dir'     => [ light_cyan ]                  # Directory path.
 		'symlink' => [ xpurplea ]                    # Symlink path.
-		'cmd'     => [ light_purple_bold ]           # Shell command.
+		'cmd'     => [ magenta ]                     # Shell command.
 		'key'     => [ mediumturquoise attr_bold]    # A key in user input (e.g in a TOML, JSON, YAML etc. file.)
 		'type'    => [ cyan ]                        # A type description.
 		'input'   => [ grey62 ]                      # Unknown, invalid or unrecognized user input.
 		'depset'  => [ light_blue_bold ]             # This is for use in Depman. TODO: Separate this into Depman repo.
+		'command' => [ darkgoldenrod attr_bold ]     # Same as above.
 		'dep'     => [ yellow_bold ]                 # Same as above. 
 	}
 	| with {|code|
