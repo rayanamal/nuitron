@@ -10,7 +10,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@latest
+        uses: cargo-bins/cargo-binstall@main
       - name: Install commitlint-rs
         run: cargo binstall commitlint-rs
       - name: Print versions
