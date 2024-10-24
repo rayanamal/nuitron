@@ -12,7 +12,7 @@ jobs:
       - name: Install cargo-binstall
         uses: cargo-bins/cargo-binstall@main
       - name: Install commitlint-rs
-        run: cargo binstall commitlint-rs
+        run: cargo binstall --no-confirm commitlint-rs
       - name: Print versions
         run: commitlint --version
       - name: Validate current commit (last commit) with commitlint
