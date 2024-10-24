@@ -1,6 +1,6 @@
 name: CI
 
-on: [push, pull_request, workflow_dispatch]
+on: [push, pull_request]
 
 jobs:
   commitlint:
@@ -17,7 +17,7 @@ jobs:
         run: commitlint --version
       - name: Validate current commit (last commit) with commitlint
         if: github.event_name == 'push'
-        run: commitlint --last --verbose
+        run: commitlint
       - name: Validate PR commits with commitlint
         if: github.event_name == 'pull_request'
         run: commitlint --from ${{ github.event.pull_request.head.sha }}~${{ github.event.pull_request.commits }} --to ${{ github.event.pull_request.head.sha }} --verbose
