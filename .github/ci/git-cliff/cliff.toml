@@ -9,6 +9,7 @@
 # template for the changelog header
 header = """
 # Changelog\n
+All notable changes to this project are documented here.\n
 """
 # template for the changelog body
 # https://keats.github.io/tera/docs/#introduction
@@ -55,27 +56,28 @@ commit_preprocessors = [
   #{ pattern = '\((\w+\s)?#([0-9]+)\)', replace = "([#${2}](<REPO>/issues/${2}))"},
   # Check spelling of the commit with https://github.com/crate-ci/typos
   # If the spelling is incorrect, it will be automatically fixed.
-  #{ pattern = '.*', replace_command = 'typos --write-changes -' },
+  # { pattern = '.*', replace_command = 'typos --write-changes -' },
 ]
 # regex for parsing and grouping commits
-# commit_parsers = [
-#   { message = "^feat", group = "<!-- 0 -->🚀 Features" },
-#   { message = "^fix", group = "<!-- 1 -->🐛 Bug Fixes" },
-#   { message = "^doc", group = "<!-- 3 -->📚 Documentation" },
-#   { message = "^perf", group = "<!-- 4 -->⚡ Performance" },
-#   { message = "^refactor", group = "<!-- 2 -->🚜 Refactor" },
-#   { message = "^style", group = "<!-- 5 -->🎨 Styling" },
-#   { message = "^test", group = "<!-- 6 -->🧪 Testing" },
-#   { message = "^chore\\(release\\): prepare for", skip = true },
-#   { message = "^chore\\(deps.*\\)", skip = true },
-#   { message = "^chore\\(pr\\)", skip = true },
-#   { message = "^chore\\(pull\\)", skip = true },
-#   { message = "^chore|^ci", group = "<!-- 7 -->⚙️ Miscellaneous Tasks" },
-#   { body = ".*security", group = "<!-- 8 -->🛡️ Security" },
-#   { message = "^revert", group = "<!-- 9 -->◀️ Revert" },
-# ]
+commit_parsers = [
+  { message = "^feat", group = "<!-- 0 -->🚀 Features" },
+  { message = "^fix", group = "<!-- 1 -->🐛 Bug Fixes" },
+  { message = "^doc", group = "<!-- 3 -->📚 Documentation" },
+  { message = "^perf", group = "<!-- 4 -->⚡ Performance" },
+  { message = "^refactor", group = "<!-- 2 -->🚜 Refactor" },
+  { message = "^style", group = "<!-- 5 -->🎨 Styling" },
+  { message = "^test", group = "<!-- 6 -->🧪 Testing" },
+  { message = "^chore\\(release\\): prepare for", skip = true },
+  { message = "^chore\\(deps.*\\)", skip = true },
+  { message = "^chore\\(pr\\)", skip = true },
+  { message = "^chore\\(pull\\)", skip = true },
+  { message = "^chore|^ci", group = "<!-- 7 -->⚙️ Miscellaneous Tasks" },
+  { body = ".*security", group = "<!-- 8 -->🛡️ Security" },
+  { message = "^revert", group = "<!-- 9 -->◀️ Revert" },
+  { message = ".*", group = "<!-- 10 -->💼 Other" },
+]
 # filter out the commits that are not matched by commit parsers
-filter_commits = false
+filter_commits = true
 # sort the tags topologically
 topo_order = false
 # sort the commits inside sections by oldest/newest order
